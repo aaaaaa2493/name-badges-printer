@@ -1,125 +1,56 @@
 package nameBadgesPrinter
 
+import java.io.File
 import java.util.*
 
-fun main(args: Array<String>) {
+fun getFont(path: String): Pair<Array<String>, Int> {
+    val scanner = Scanner(File(path))
+    val charset = Array(128) {""}
+    val charHeight = scanner.nextInt()
+    val charCount = scanner.nextInt()
+    repeat(charCount) {_ ->
+        val char = scanner.next()[0]
+        scanner.nextLine()
+        repeat(charHeight) {_ ->
+            val line = scanner.nextLine()
+            charset[char.toInt()] += line
+        }
+    }
+    charset[' '.toInt()] = " ".repeat(charset['a'.toInt()].length)
+    return Pair(charset, charHeight)
+}
 
+fun getText(fontName: String, text: String): Array<String> {
+    val (font, fontSize) = getFont("fonts/$fontName.txt")
+    val output = Array(fontSize) {""}
+    for (ch in text) {
+        val curChar = font[ch.toInt()]
+        val charLength = curChar.length / fontSize
+        for (row in 0 until fontSize) {
+            output[row] += curChar.substring(row * charLength until (row+1) * charLength)
+        }
+    }
+    return output
+}
+
+fun addAround(output: Array<String>, toLeft: String, toRight: String) {
+    for (row in 0 until output.size) {
+        output[row] = "$toLeft${output[row]}$toRight"
+    }
+}
+
+fun fillWithSpaces(output: Array<String>, length: Int) {
+    val needSpaces = length - output[0].length
+    if (needSpaces <= 0) return
+    val leftSpaces = " ".repeat(needSpaces / 2)
+    val rightSpaces = " ".repeat(needSpaces - leftSpaces.length)
+    addAround(output, leftSpaces, rightSpaces)
+}
+
+fun main(args: Array<String>) {
     val scanner = Scanner(System.`in`)
 
-    val a = "____" +
-            "|__|" +
-            "|  |"
-
-    val b = "___ " +
-            "|__]" +
-            "|__]"
-
-    val c = "____" +
-            "|   " +
-            "|___"
-
-    val d = "___ " +
-            "|  \\" +
-            "|__/"
-
-    val e = "____" +
-            "|___" +
-            "|___"
-
-    val f = "____" +
-            "|___" +
-            "|   "
-
-    val g = "____" +
-            "| __" +
-            "|__]"
-
-    val h = "_  _" +
-            "|__|" +
-            "|  |"
-
-    val i = "_" +
-            "|" +
-            "|"
-
-    val j = " _" +
-            " |" +
-            "_|"
-
-    val k = "_  _" +
-            "|_/ " +
-            "| \\_"
-
-    val l = "_   " +
-            "|   " +
-            "|___"
-
-    val m = "_  _" +
-            "|\\/|" +
-            "|  |"
-
-    val n = "_  _" +
-            "|\\ |" +
-            "| \\|"
-
-    val o = "____" +
-            "|  |" +
-            "|__|"
-
-    val p = "___ " +
-            "|__]" +
-            "|   "
-
-    val q = "____" +
-            "|  |" +
-            "|_\\|"
-
-    val r = "____" +
-            "|__/" +
-            "|  \\"
-
-    val s = "____" +
-            "[__ " +
-            "___]"
-
-    val t = "___" +
-            " | " +
-            " | "
-
-    val u = "_  _" +
-            "|  |" +
-            "|__|"
-
-    val v = "_  _" +
-            "|  |" +
-            " \\/ "
-
-    val w = "_ _ _" +
-            "| | |" +
-            "|_|_|"
-
-    val x = "_  _" +
-            " \\/ " +
-            "_/\\_"
-
-    val y = "_   _" +
-            " \\_/ " +
-            "  |  "
-
-    val z = "___ " +
-            "  / " +
-            " /__"
-
-    val space = "    " +
-                "    " +
-                "    "
-
-    val alphabet = arrayOf(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, space)
-    val alphabetSize = 3
-    val output = Array(alphabetSize) {""}
-
     print("Enter name and surname: ")
-
     val name = scanner.next()
     val surname = scanner.next()
 
@@ -127,39 +58,24 @@ fun main(args: Array<String>) {
     scanner.nextLine()
     val status = scanner.nextLine()
 
-    val textToShow = "$name $surname".toLowerCase()
+    val textToShow = "$name $surname"
+    val nameOutput = getText("roman", textToShow)
+    val statusOutput = getText("medium", status)
 
-    for ((index, ch) in textToShow.withIndex()) {
-        val curChar = if (ch == ' ') alphabet.last() else alphabet[ch - 'a']
-        val charLength = curChar.length / alphabetSize
-        for (row in 0 until alphabetSize) {
-            val partOfChar = curChar.subSequence(row * charLength until (row+1) * charLength).toString()
-            output[row] += partOfChar
-            if (index != textToShow.lastIndex) {
-                output[row] += " "
-            }
-        }
-    }
+    val topBottomBorder = "8"
+    val leftRightBorder = "88"
+    val leftRightBlank = "  "
 
-    for (row in 0 until alphabetSize) {
-        output[row] = "*  " + output[row] + "  *"
-    }
+    addAround(nameOutput, leftRightBlank, leftRightBlank)
+    addAround(statusOutput, leftRightBlank, leftRightBlank)
+    fillWithSpaces(statusOutput, nameOutput[0].length)
+    fillWithSpaces(nameOutput, statusOutput[0].length)
+    addAround(nameOutput, leftRightBorder, leftRightBorder)
+    addAround(statusOutput, leftRightBorder, leftRightBorder)
 
-    val badgeLength = output[0].length
-
-    val badgeLengthWithoutBorders = badgeLength - 2
-    val needSpaces = badgeLengthWithoutBorders - status.length
-    val leftSpaces: Int = needSpaces / 2
-    val rightSpaces: Int = needSpaces - leftSpaces
-
-    val infoRow = "*${" ".repeat(leftSpaces)}$status${" ".repeat(rightSpaces)}*"
-
-    val badgeBorder = "*".repeat(badgeLength)
-
+    val badgeBorder = topBottomBorder.repeat(nameOutput[0].length)
     println(badgeBorder)
-    for (row in 0 until alphabetSize) {
-        println(output[row])
-    }
-    println(infoRow)
+    nameOutput.forEach { println(it) }
+    statusOutput.forEach { println(it) }
     println(badgeBorder)
 }
